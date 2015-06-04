@@ -3,9 +3,9 @@ import time
 import numpy as np
 
 WIDTH = 2 #int32
-CHANNELS = 2
-RATE = 10000
-audio_size = 1024
+CHANNELS = 1
+RATE = 16000
+audio_size = 512
 #shift property
 semi_shift = -5
 print('semi_shift:' + str(semi_shift))
@@ -24,6 +24,7 @@ def callback(in_data, frame_count, time_info, status):
 	# preprocessing 
 		# translate text base data to array and kill nan and inf
 	audio_data = np.nan_to_num(np.fromstring(in_data, dtype=np.int32))
+
 	# fft
 	fft_data = np.fft.rfft(audio_data)
 	#freq shift
