@@ -1,56 +1,50 @@
 import pyaudio
 import time
 import numpy as np
-import scipy.signal as signal
 
-WIDTH = 2
+WIDTH = 2 #int32
 CHANNELS = 2
-RATE = 16000
+RATE = 10000
+audio_size = 1024
 #shift property
-semi_shift = 0
+semi_shift = -20
+print('semi_shift:' + str(semi_shift))
 shift_ratio = np.exp2(semi_shift/12)
+print('shift_ratio:' + str(shift_ratio))
 #freq property
-freq = np.fft.fftfreq(1024, 1/RATE) 
+freq = np.fft.rfftfreq(audio_size, 1/RATE) 
+s_freq = freq*shift_ratio
+freqsize = s_freq.size
 #pyAudio
 p = pyaudio.PyAudio()
 
-# b,a=signal.iirdesign(0.03,0.07,5,40)
-# fulldata = np.array([])
-
 
 def callback(in_data, frame_count, time_info, status):
-	global RATE, shift_ratio, freq
-	# preprocessing
-	audio_data = np.fromstring(in_data, dtype=np.float32)
-	audio_data = np.nan_to_num(audio_data);
+	global RATE, shift_ratio, freq, s_freq, audio_size, freqsize
+	# preprocessing 
+		# translate text base data to array and kill nan and inf
+	audio_data = np.nan_to_num(np.fromstring(in_data, dtype=np.int32))
 	# fft
 	fft_data = np.fft.rfft(audio_data)
 	#freq shift
-	s_freq = freq*shift_ratio
-	s_fft = np.zeros(fft_data.size)
-
-	i = 0
-	j = 0
+	s_fft = np.zeros(freqsize, dtype = np.complex128)
+	ii = 0
+	jj = 0
 	freq_diff = freq[1] - freq[0]
-	while i < freq.size-1:
+	while ii < freqsize:
 		#linear shift
-		s_fft[j] += fft_data[i]*(1-(s_freq[i]-s_freq[j])/freq_diff)
-		s_fft[j] += fft_data[i]*((s_freq[i]-s_freq[j])/freq_diff)
-
-		if s_freq[j] <= freq[i]:
-			j = j + 1
+		s_fft[jj] += (fft_data[ii])*(1-(s_freq[ii]-freq[jj])/freq_diff)
+		s_fft[jj+1] += (fft_data[ii])*((s_freq[ii]-freq[jj])/freq_diff)
+		if freq[jj+1] <= s_freq[ii]:
+			jj = jj + 1
 			pass
-		i = i + 1
+		ii = ii + 1
 		pass
-
-
 	#post processing
-	out_data = np.fft.irfft(fft_data, len(fft_data))
-	audio_data = out_data.astype(np.float32).tostring()
+	audio_data = np.fft.irfft(s_fft, audio_size)
+	out_data = audio_data.astype(np.int32).tostring()
 	
-	# fulldata = np.append(fulldata,audio_data)
-
-	return(audio_data, pyaudio.paContinue)
+	return(out_data, pyaudio.paContinue)
 	pass
 
 stream = p.open(format=p.get_format_from_width(WIDTH),
@@ -61,7 +55,6 @@ stream = p.open(format=p.get_format_from_width(WIDTH),
                 stream_callback=callback)
 
 stream.start_stream()
-i = 0
 while stream.is_active():
     time.sleep(0)
     
