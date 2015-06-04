@@ -26,45 +26,34 @@ def callback(in_data, frame_count, time_info, status):
 	# preprocessing 
 		# translate text base data to array and kill nan and inf
 	audio_data = np.nan_to_num(np.fromstring(in_data, dtype=np.int32))
-	audio_data = np.reshape(audio_data, (frame_count, 2))
+	audio_data = np.transpose(np.reshape(audio_data, (int(audio_size/2), 2)))
+
 	# fft
-	L_fft_data = np.fft.rfft(L_data, int(audio_size/2))
-	R_fft_data = np.fft.rfft(R_data, int(audio_size/2))
+	fft_data = np.fft.rfft(audio_data, int(audio_size/2))
+
 	#freq shift
 		#L
-	s_L_fft = np.zeros(freqsize, dtype = np.complex128)
+	s_fft = np.zeros((2,freqsize), dtype = np.complex128)
 	ii = 0
 	jj = 0
 	freq_diff = freq[1] - freq[0]
+
 	while ii < freqsize:
 		#linear shift
-		s_L_fft[jj] += (L_fft_data[ii])*(1-(s_freq[ii]-freq[jj])/freq_diff)
-		s_L_fft[jj+1] += (L_fft_data[ii])*((s_freq[ii]-freq[jj])/freq_diff)
-		if freq[jj+1] <= s_freq[ii]:
-			jj = jj + 1
-			pass
-		ii = ii + 1
-		pass
-		#R
-	s_R_fft = np.zeros(freqsize, dtype = np.complex128)
-	ii = 0
-	jj = 0
-	freq_diff = freq[1] - freq[0]
-	while ii < freqsize:
-		#linear shift
-		s_R_fft[jj] += (R_fft_data[ii])*(1-(s_freq[ii]-freq[jj])/freq_diff)
-		s_R_fft[jj+1] += (R_fft_data[ii])*((s_freq[ii]-freq[jj])/freq_diff)
+		s_fft[0, jj] += (fft_data[0, ii])*(1-(s_freq[ii]-freq[jj])/freq_diff)
+		s_fft[0, jj+1] += (fft_data[0, ii])*((s_freq[ii]-freq[jj])/freq_diff)
+		s_fft[1, jj] += (fft_data[1, ii])*(1-(s_freq[ii]-freq[jj])/freq_diff)
+		s_fft[1, jj+1] += (fft_data[1, ii])*((s_freq[ii]-freq[jj])/freq_diff)
 		if freq[jj+1] <= s_freq[ii]:
 			jj = jj + 1
 			pass
 		ii = ii + 1
 		pass
 	#post processing
-	L_data = np.fft.irfft(s_L_fft, audio_size)
-	R_data = np.fft.irfft(s_R_fft, audio_size)
-	audio_data = np.append(L_data,R_data)
+	audio_data = np.transpose(np.fft.irfft(s_fft, int(audio_size/2)))
+	audio_data = audio_data.flatten()
+
 	out_data = audio_data.astype(np.int32).tostring()
-	
 	return(out_data, pyaudio.paContinue)
 	pass
 
@@ -77,8 +66,8 @@ stream = p.open(format=p.get_format_from_width(WIDTH),
 
 stream.start_stream()
 while stream.is_active():
-    time.sleep(0)
-    
+	time.sleep(0)
+
 
 stream.stop_stream()
 stream.close()
