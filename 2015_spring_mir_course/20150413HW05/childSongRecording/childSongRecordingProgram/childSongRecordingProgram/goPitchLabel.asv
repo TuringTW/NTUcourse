@@ -1,0 +1,30 @@
+% Label pitch of wave files in a given directory
+
+close all; clear all;
+
+% ====== Add necessary toolboxes to the search path
+addpath d:/users/jang/matlab/toolbox/utility
+addpath d:/users/jang/matlab/toolbox/sap
+addpath d:/users/jang/matlab/toolbox/sap/labelingProgram/pitchLabelingProgram
+
+% ====== Directory of the wave files
+waveDir='D:\users\jang\books\audioSignalProcessing\voiceRecording\childSongRecording\waveFile\1234';
+
+waveDir=strrep(waveDir, '\', '/');
+waveData=recursiveFileList(waveDir, 'wav');
+waveNum=length(waveData);
+fprintf('Read %d wave files from "%S"\n', waveNum, waveDir);
+
+for i=1:waveNum
+	waveFile=waveData(i).path;
+	fprintf('%d/%d: Check the pitch of %s...\n', i, waveNum, waveFile);
+	wObj=waveFile2obj(waveFile);
+	targetPitchFile=[waveFile(1:end-3), 'pv'];
+	if exist(targetPitchFile)
+		wObj.
+
+	pitchLabel(wObj);
+	fprintf('\tHit any key to check next wav file...\n'); pause
+	savePitch;
+	close all
+end

@@ -1,0 +1,21 @@
+Please describe your EPD methods and the corresponding recognition rates.
+In particular, you need to describe how you optimize your EPD system.
+
+
+用音量和zcr來處理
+首先分別用統計方法(上課教的那種97% 3%)
+分別計算出音量和zcr的閥值
+
+並將閥值以上的音量和zcr數值相乘，再乘上係數後與音量相加
+再用統計算出這個新的zcrvol值的閥值
+
+閥值求出該點指標為初始指標
+因zcrvol值再音量小於音量閥值皆為零
+因此再用初始指標往前往後推到zcrvol為零的點
+這樣可以使整個有人聲的範圍被圈出來
+
+example裡的測資平均可達87.5% 最高97.22%
+但雜訊太多就不行了
+可能會完全無法辨識
+ex:	t03902121這筆就會完全失敗
+	b02902100這筆則因為在人聲結束後會有另一股超大聲的背景音
